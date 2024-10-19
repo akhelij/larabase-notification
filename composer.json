@@ -1,0 +1,54 @@
+{
+    "name": "akhelij/larabase-notification",
+    "description": "Larabase Notification is a powerful Laravel package for handling push notifications via Firebase Cloud Messaging (FCM). It simplifies the process of sending notifications to Android, iOS, and web applications, leveraging Firebase's real-time capabilities. With minimal setup, Larabase Notification provides a streamlined interface to send device-specific, topic-based, or condition-based notifications directly from your Laravel application.",
+    "keywords": [
+        "akhelij",
+        "larabase-notification"
+    ],
+    "homepage": "https://github.com/akhelij/larabase-notification",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Mohamed Akhelij",
+            "email": "m.akhelij@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "illuminate/support": "^8.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^6.0",
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Akhelij\\LarabaseNotification\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Akhelij\\LarabaseNotification\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Akhelij\\LarabaseNotification\\LarabaseNotificationServiceProvider"
+            ],
+            "aliases": {
+                "LarabaseNotification": "Akhelij\\LarabaseNotification\\LarabaseNotificationFacade"
+            }
+        }
+    }
+}
