@@ -25,16 +25,4 @@ return [
     |
     */
     'service_account_file' => storage_path(env('FIREBASE_SERVICE_ACCOUNT_FILE', 'app/firebase_credentials.json')),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Firebase Server Key (Optional for Legacy)
-    |--------------------------------------------------------------------------
-    |
-    | This is your Firebase server key. It's still needed if you are
-    | supporting the legacy FCM API. You can find it in the Firebase console
-    | under Project Settings -> Cloud Messaging.
-    |
-    */
-    'server_key' => env('FIREBASE_SERVER_KEY'),
 ];
