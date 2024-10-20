@@ -15,7 +15,7 @@ class LarabaseMessage
      * @param string $title
      * @return $this
      */
-    public function setTitle($title)
+    public function withTitle($title)
     {
         $this->title = $title;
         return $this;
@@ -27,7 +27,7 @@ class LarabaseMessage
      * @param string $body
      * @return $this
      */
-    public function setBody($body)
+    public function withBody($body)
     {
         $this->body = $body;
         return $this;
@@ -39,7 +39,7 @@ class LarabaseMessage
      * @param array $data
      * @return $this
      */
-    public function setAdditionalData(array $data)
+    public function withAdditionalData(array $data)
     {
         $this->additionalData = $data;
         return $this;
