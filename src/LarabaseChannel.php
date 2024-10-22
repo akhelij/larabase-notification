@@ -10,8 +10,6 @@ class LarabaseChannel
 {
     public function send($notifiable, Notification $notification)
     {
-        Log::info('LarabaseChannel@send method called.');
-
         // Retrieve the message from the notification
         $message = $notification->toLarabase($notifiable);
 
@@ -40,7 +38,6 @@ class LarabaseChannel
                     $message->body,
                     $message->additionalData
                 );
-                Log::info('Notification sent to device token: ' . $deviceToken);
             } catch (\Exception $e) {
                 Log::error('Error sending notification: ' . $e->getMessage());
             }

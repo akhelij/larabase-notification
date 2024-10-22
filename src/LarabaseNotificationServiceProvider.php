@@ -23,8 +23,6 @@ class LarabaseNotificationServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Log::info('LarabaseNotificationServiceProvider@boot method called.');
-
         // Defer the registration until the Notification service is resolved
         Notification::resolved(function (ChannelManager $service) {
             Log::info('Registering larabase notification channel.');
