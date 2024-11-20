@@ -32,12 +32,25 @@ class LarabaseChannel
         foreach ($deviceTokens as $deviceToken) {
             try {
                 $firebase = new LarabaseNotification();
-                $firebase->sendNotification(
+                $response = $firebase->sendNotification(
                     $deviceToken,
                     $message->title,
                     $message->body,
                     $message->additionalData
                 );
+                
+                if (isset($response['error'])) {
+                    $errorCode = $response['error']['details'][0]['errorCode'] ?? '';
+                    if ($errorCode === 'UNREGISTERED') {
+                        Log::warning('Device token unregistered: ' . $deviceToken);
+                        // Remove the token from your database
+                        $this->removeDeviceToken($deviceToken);
+                    } else {
+                        Log::error('Error sending notification to ' . $deviceToken . ': ' . $response['error']['message']);
+                    }
+                } else {
+                    Log::info('Notification sent to device token: ' . $deviceToken);
+                }
             } catch (\Exception $e) {
                 Log::error('Error sending notification: ' . $e->getMessage());
             }
