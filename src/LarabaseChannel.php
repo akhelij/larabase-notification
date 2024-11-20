@@ -43,8 +43,6 @@ class LarabaseChannel
                     $errorCode = $response['error']['details'][0]['errorCode'] ?? '';
                     if ($errorCode === 'UNREGISTERED') {
                         Log::warning('Device token unregistered: ' . $deviceToken);
-                        // Remove the token from your database
-                        $this->removeDeviceToken($deviceToken);
                     } else {
                         Log::error('Error sending notification to ' . $deviceToken . ': ' . $response['error']['message']);
                     }
