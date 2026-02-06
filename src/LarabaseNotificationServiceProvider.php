@@ -2,37 +2,32 @@
 
 namespace Akhelij\LarabaseNotification;
 
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Notifications\ChannelManager;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
 
 class LarabaseNotificationServiceProvider extends ServiceProvider
 {
-    /**
-     * Register the application services.
-     */
-    public function register()
+    public function register(): void
     {
-        // Merge the package configuration with the app's existing config
-        $this->mergeConfigFrom(__DIR__.'/../config/larabase-notification.php', 'larabase-notification');
+        $this->mergeConfigFrom(__DIR__ . '/../config/larabase-notification.php', 'larabase-notification');
+
+        $this->app->singleton(LarabaseNotification::class);
+
+        $this->app->singleton('larabase-notification', function ($app) {
+            return $app->make(LarabaseNotification::class);
+        });
     }
 
-    /**
-     * Bootstrap the application services.
-     */
-    public function boot()
+    public function boot(): void
     {
-        // Defer the registration until the Notification service is resolved
         Notification::resolved(function (ChannelManager $service) {
-            Log::info('Registering larabase notification channel.');
-
             $service->extend('larabase', function ($app) {
-                return new LarabaseChannel();
+                return new LarabaseChannel($app->make(Dispatcher::class));
             });
         });
 
-        // Publish the configuration file
         $this->publishes([
             __DIR__ . '/../config/larabase-notification.php' => config_path('larabase-notification.php'),
         ], 'config');
