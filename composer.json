@@ -1,7 +1,12 @@
 {
     "name": "akhelij/larabase-notification",
-    "description": "Larabase Notification is a powerful Laravel package for handling push notifications via Firebase Cloud Messaging (FCM). It simplifies the process of sending notifications to Android, iOS, and web applications, leveraging Firebase's real-time capabilities. With minimal setup, Larabase Notification provides a streamlined interface to send device-specific, topic-based, or condition-based notifications directly from your Laravel application.",
+    "description": "A lightweight Laravel package for sending push notifications via Firebase Cloud Messaging (FCM) HTTP v1 API. Send device-specific notifications to Android, iOS, and web applications with minimal setup, concurrent delivery, and automatic retry.",
     "keywords": [
+        "laravel",
+        "firebase",
+        "fcm",
+        "push-notifications",
+        "cloud-messaging",
         "akhelij",
         "larabase-notification"
     ],
@@ -16,12 +21,16 @@
         }
     ],
     "require": {
-        "php": "^7.4|^8.0",
-        "google/auth": "^1.42"
+        "php": "^8.1",
+        "google/auth": "^1.42",
+        "illuminate/http": "^10.0|^11.0|^12.0",
+        "illuminate/notifications": "^10.0|^11.0|^12.0",
+        "illuminate/support": "^10.0|^11.0|^12.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^6.0",
-        "phpunit/phpunit": "^9.0"
+        "mockery/mockery": "^1.6",
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "phpunit/phpunit": "^10.0|^11.0"
     },
     "autoload": {
         "psr-4": {
@@ -30,13 +39,12 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Akhelij\\LarabaseNotification\\Tests\\": "src/tests"
+            "Akhelij\\LarabaseNotification\\Tests\\": "tests"
         }
     },
     "scripts": {
         "test": "vendor/bin/phpunit",
         "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
-
     },
     "config": {
         "sort-packages": true
@@ -47,8 +55,10 @@
                 "Akhelij\\LarabaseNotification\\LarabaseNotificationServiceProvider"
             ],
             "aliases": {
-                "LarabaseNotification": "LarabaseNotificationFacade"
+                "LarabaseNotification": "Akhelij\\LarabaseNotification\\LarabaseNotificationFacade"
             }
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
