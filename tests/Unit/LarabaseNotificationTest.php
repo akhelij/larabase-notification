@@ -218,4 +218,46 @@ class LarabaseNotificationTest extends TestCase
             return str_contains($request->url(), 'projects/custom-project/messages:send');
         });
     }
+
+    public function test_send_to_multiple_tokens_validates_payload_size(): void
+    {
+        $this->fakeCacheToken();
+        $this->expectException(PayloadTooLargeException::class);
+
+        $firebase = new LarabaseNotification();
+
+        $data = [];
+        for ($i = 0; $i < 100; $i++) {
+            $data["key_{$i}"] = str_repeat('x', 100);
+        }
+
+        $firebase->sendToMultipleTokens(['token1', 'token2'], 'Title', 'Body', $data);
+    }
+
+    public function test_cache_key_includes_project_id(): void
+    {
+        $cached = [];
+
+        Cache::shouldReceive('remember')
+            ->andReturnUsing(function ($key, $ttl, $callback) use (&$cached) {
+                $cached[] = $key;
+
+                return 'fake-token';
+            });
+
+        Http::fake([
+            'fcm.googleapis.com/*' => Http::response(['name' => 'ok']),
+        ]);
+
+        $firebase1 = new LarabaseNotification('project-a', '/a.json');
+        $firebase1->sendNotification('token', 'Title', 'Body');
+
+        $firebase2 = new LarabaseNotification('project-b', '/b.json');
+        $firebase2->sendNotification('token', 'Title', 'Body');
+
+        $this->assertCount(2, $cached);
+        $this->assertNotSame($cached[0], $cached[1]);
+        $this->assertStringContainsString('project-a', $cached[0]);
+        $this->assertStringContainsString('project-b', $cached[1]);
+    }
 }

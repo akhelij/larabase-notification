@@ -50,6 +50,8 @@ class LarabaseNotification
      *
      * @param  string[]  $tokens
      * @return array<string, array> Token => response mapping
+     *
+     * @throws PayloadTooLargeException
      */
     public function sendToMultipleTokens(
         array $tokens,
@@ -65,36 +67,36 @@ class LarabaseNotification
         $additionalData = array_map('strval', $additionalData);
         $accessToken = $this->getAccessToken();
         $url = $this->getApiUrl();
+
         $chunkSize = (int) config('larabase-notification.chunk_size', 500);
+        $timeout = (int) config('larabase-notification.timeout', 30);
+        $retryAttempts = (int) config('larabase-notification.retry.attempts', 3);
+        $retryDelay = (int) config('larabase-notification.retry.delay', 100);
+        $concurrency = (int) config('larabase-notification.concurrency', 0);
+        $retryDecider = $this->retryDecider();
+
+        $this->validatePayloadSize(
+            $this->buildPayload($tokens[0], $title, $body, $additionalData, $message)
+        );
+
         $results = [];
 
         foreach (array_chunk($tokens, $chunkSize) as $chunk) {
-            $responses = Http::pool(function (Pool $pool) use ($chunk, $accessToken, $url, $title, $body, $additionalData, $message) {
+            $poolCallback = function (Pool $pool) use ($chunk, $accessToken, $url, $title, $body, $additionalData, $message, $timeout, $retryAttempts, $retryDelay, $retryDecider) {
                 foreach ($chunk as $token) {
                     $payload = $this->buildPayload($token, $title, $body, $additionalData, $message);
 
                     $pool->as($token)
                         ->withToken($accessToken)
-                        ->timeout((int) config('larabase-notification.timeout', 30))
-                        ->retry(
-                            (int) config('larabase-notification.retry.attempts', 3),
-                            (int) config('larabase-notification.retry.delay', 100),
-                            function (\Throwable $exception) {
-                                if ($exception instanceof ConnectionException) {
-                                    return true;
-                                }
-
-                                if ($exception instanceof RequestException) {
-                                    return in_array($exception->response->status(), [429, 500, 503]);
-                                }
-
-                                return false;
-                            },
-                            throw: false,
-                        )
+                        ->timeout($timeout)
+                        ->retry($retryAttempts, $retryDelay, $retryDecider, throw: false)
                         ->post($url, $payload);
                 }
-            });
+            };
+
+            $responses = $concurrency > 0
+                ? Http::pool($poolCallback, concurrency: $concurrency)
+                : Http::pool($poolCallback);
 
             foreach ($responses as $token => $response) {
                 if ($response instanceof \Throwable) {
@@ -174,24 +176,26 @@ class LarabaseNotification
             ->retry(
                 (int) config('larabase-notification.retry.attempts', 3),
                 (int) config('larabase-notification.retry.delay', 100),
-                function (\Throwable $exception) {
-                    if ($exception instanceof ConnectionException) {
-                        return true;
-                    }
-
-                    if ($exception instanceof RequestException) {
-                        return in_array($exception->response->status(), [429, 500, 503]);
-                    }
-
-                    return false;
-                },
+                $this->retryDecider(),
                 throw: false,
             )
             ->post($url, $payload);
 
-        Log::info('Firebase Notification Response:', $response->json() ?? []);
-
         return $response->json() ?? [];
+    }
+
+    /**
+     * Build the retry decision closure for FCM requests.
+     *
+     * Retries on connection errors and transient HTTP status codes (429, 500, 503).
+     */
+    protected function retryDecider(): \Closure
+    {
+        return function (\Throwable $exception) {
+            return $exception instanceof ConnectionException
+                || ($exception instanceof RequestException
+                    && in_array($exception->response->status(), [429, 500, 503]));
+        };
     }
 
     /**
@@ -209,7 +213,8 @@ class LarabaseNotification
      */
     public function getAccessToken(): string
     {
-        $cacheKey = 'larabase_fcm_oauth_token';
+        $projectId = $this->projectId ?? config('larabase-notification.project_id');
+        $cacheKey = "larabase_fcm_oauth_token:{$projectId}";
 
         return Cache::remember($cacheKey, 3500, function () {
             $jsonKeyFilePath = $this->serviceAccountFile

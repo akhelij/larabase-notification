@@ -84,4 +84,22 @@ class LarabaseSendReportTest extends TestCase
         $this->assertSame([], $report->unregisteredTokens());
         $this->assertSame(['token1'], $report->failedTokens());
     }
+
+    public function test_extract_error_code_returns_code(): void
+    {
+        $response = [
+            'error' => [
+                'message' => 'Token unregistered',
+                'details' => [['errorCode' => 'UNREGISTERED']],
+            ],
+        ];
+
+        $this->assertSame('UNREGISTERED', LarabaseSendReport::extractErrorCode($response));
+    }
+
+    public function test_extract_error_code_returns_empty_string_for_missing_details(): void
+    {
+        $this->assertSame('', LarabaseSendReport::extractErrorCode(['error' => ['message' => 'fail']]));
+        $this->assertSame('', LarabaseSendReport::extractErrorCode([]));
+    }
 }

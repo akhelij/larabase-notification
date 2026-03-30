@@ -169,6 +169,20 @@ class LarabaseMessageTest extends TestCase
         $this->assertSame('NORMAL', $message->androidConfig['priority']);
     }
 
+    public function test_with_sound_called_twice_overwrites_instead_of_merging(): void
+    {
+        $message = (new LarabaseMessage())->withSound('default')->withSound('custom.caf');
+
+        $this->assertSame('custom.caf', $message->apnsConfig['payload']['aps']['sound']);
+    }
+
+    public function test_with_priority_called_twice_overwrites(): void
+    {
+        $message = (new LarabaseMessage())->withPriority('HIGH')->withPriority('NORMAL');
+
+        $this->assertSame('NORMAL', $message->androidConfig['priority']);
+    }
+
     public function test_using_client_sets_custom_client(): void
     {
         $client = new LarabaseNotification('my-project', '/path/to/creds.json');

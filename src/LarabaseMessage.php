@@ -123,7 +123,7 @@ class LarabaseMessage
      */
     public function withSound(string $sound = 'default'): static
     {
-        $this->apnsConfig = array_merge_recursive($this->apnsConfig ?? [], [
+        $this->apnsConfig = array_replace_recursive($this->apnsConfig ?? [], [
             'payload' => ['aps' => ['sound' => $sound]],
         ]);
 
@@ -135,7 +135,7 @@ class LarabaseMessage
      */
     public function withBadge(int $count): static
     {
-        $this->apnsConfig = array_merge_recursive($this->apnsConfig ?? [], [
+        $this->apnsConfig = array_replace_recursive($this->apnsConfig ?? [], [
             'payload' => ['aps' => ['badge' => $count]],
         ]);
 
@@ -147,7 +147,7 @@ class LarabaseMessage
      */
     public function withClickAction(string $action): static
     {
-        $this->androidConfig = array_merge_recursive($this->androidConfig ?? [], [
+        $this->androidConfig = array_replace_recursive($this->androidConfig ?? [], [
             'notification' => ['click_action' => $action],
         ]);
 
@@ -159,7 +159,7 @@ class LarabaseMessage
      */
     public function withPriority(string $priority = 'HIGH'): static
     {
-        $this->androidConfig = array_merge_recursive($this->androidConfig ?? [], [
+        $this->androidConfig = array_replace_recursive($this->androidConfig ?? [], [
             'priority' => $priority,
         ]);
 

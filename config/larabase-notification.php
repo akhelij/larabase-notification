@@ -59,4 +59,16 @@ return [
     |
     */
     'chunk_size' => (int) env('LARABASE_CHUNK_SIZE', 500),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pool Concurrency
+    |--------------------------------------------------------------------------
+    |
+    | Maximum number of simultaneous HTTP connections within each pool chunk.
+    | Set to 0 (default) to send all requests in a chunk at once.
+    | Requires Laravel 11+.
+    |
+    */
+    'concurrency' => (int) env('LARABASE_CONCURRENCY', 0),
 ];

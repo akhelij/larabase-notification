@@ -57,13 +57,7 @@ class LarabaseChannel
             if (isset($response['error'])) {
                 $report->addFailure($token, $response);
 
-                $errorCode = $response['error']['details'][0]['errorCode'] ?? '';
-
-                if ($errorCode === 'UNREGISTERED') {
-                    Log::warning('Device token unregistered: ' . $token);
-                } else {
-                    Log::error('Error sending notification to ' . $token . ': ' . ($response['error']['message'] ?? 'Unknown error'));
-                }
+                $errorCode = LarabaseSendReport::extractErrorCode($response);
 
                 $this->events->dispatch(new NotificationFailed(
                     $notifiable,
@@ -77,9 +71,28 @@ class LarabaseChannel
                 ));
             } else {
                 $report->addSuccess($token, $response);
-                Log::info('Notification sent to device token: ' . $token);
             }
         }
+
+        if ($report->hasFailures()) {
+            $unregistered = $report->unregisteredTokens();
+
+            if (! empty($unregistered)) {
+                Log::warning('Larabase: ' . count($unregistered) . ' unregistered token(s) detected.', [
+                    'tokens' => $unregistered,
+                ]);
+            }
+
+            $otherFailures = array_diff($report->failedTokens(), $unregistered);
+
+            if (! empty($otherFailures)) {
+                Log::error('Larabase: ' . count($otherFailures) . ' token(s) failed.', [
+                    'tokens' => array_values($otherFailures),
+                ]);
+            }
+        }
+
+        Log::debug('Larabase: sent ' . $report->successCount() . '/' . count($results) . ' notifications successfully.');
 
         return $report;
     }

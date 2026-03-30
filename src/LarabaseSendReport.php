@@ -59,13 +59,19 @@ class LarabaseSendReport
         $tokens = [];
 
         foreach ($this->failures as $token => $response) {
-            $errorCode = $response['error']['details'][0]['errorCode'] ?? '';
-
-            if ($errorCode === 'UNREGISTERED') {
+            if (static::extractErrorCode($response) === 'UNREGISTERED') {
                 $tokens[] = $token;
             }
         }
 
         return $tokens;
+    }
+
+    /**
+     * Extract the FCM error code from a failure response.
+     */
+    public static function extractErrorCode(array $response): string
+    {
+        return $response['error']['details'][0]['errorCode'] ?? '';
     }
 }

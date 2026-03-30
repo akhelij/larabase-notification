@@ -53,4 +53,9 @@ class LarabaseServiceProviderTest extends TestCase
     {
         $this->assertSame(500, config('larabase-notification.chunk_size'));
     }
+
+    public function test_concurrency_config_has_default(): void
+    {
+        $this->assertSame(0, config('larabase-notification.concurrency'));
+    }
 }

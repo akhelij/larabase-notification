@@ -10,6 +10,7 @@ use Akhelij\LarabaseNotification\LarabaseSendReport;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use Orchestra\Testbench\TestCase;
 
@@ -208,5 +209,73 @@ class LarabaseChannelTest extends TestCase
         $result = $channel->send($notifiable, $notification);
 
         $this->assertNull($result);
+    }
+
+    public function test_logs_batch_summary_on_success(): void
+    {
+        Log::shouldReceive('debug')
+            ->once()
+            ->with(Mockery::pattern('/sent 1\/1 notifications successfully/'));
+
+        $dispatcher = Mockery::mock(Dispatcher::class);
+        $dispatcher->shouldNotReceive('dispatch');
+
+        $firebase = Mockery::mock(LarabaseNotification::class);
+        $firebase->shouldReceive('sendToMultipleTokens')
+            ->once()
+            ->andReturn([
+                'token1' => ['name' => 'projects/test/messages/123'],
+            ]);
+
+        $message = (new LarabaseMessage())
+            ->withTitle('Test')
+            ->withBody('Body')
+            ->asNotification(['token1'])
+            ->usingClient($firebase);
+
+        $channel = new LarabaseChannel($dispatcher);
+        $result = $channel->send($this->createNotifiable(), $this->createNotification($message));
+
+        $this->assertSame(1, $result->successCount());
+    }
+
+    public function test_logs_unregistered_and_failed_tokens_separately(): void
+    {
+        Log::shouldReceive('warning')
+            ->once()
+            ->with(Mockery::pattern('/1 unregistered/'), Mockery::type('array'));
+
+        Log::shouldReceive('error')
+            ->once()
+            ->with(Mockery::pattern('/1 token\(s\) failed/'), Mockery::type('array'));
+
+        Log::shouldReceive('debug')->once();
+
+        $dispatcher = Mockery::mock(Dispatcher::class);
+        $dispatcher->shouldReceive('dispatch')->twice();
+
+        $firebase = Mockery::mock(LarabaseNotification::class);
+        $firebase->shouldReceive('sendToMultipleTokens')
+            ->once()
+            ->andReturn([
+                'token1' => [
+                    'error' => [
+                        'message' => 'Unregistered',
+                        'details' => [['errorCode' => 'UNREGISTERED']],
+                    ],
+                ],
+                'token2' => ['error' => ['message' => 'Internal error']],
+            ]);
+
+        $message = (new LarabaseMessage())
+            ->withTitle('Test')
+            ->withBody('Body')
+            ->asNotification(['token1', 'token2'])
+            ->usingClient($firebase);
+
+        $channel = new LarabaseChannel($dispatcher);
+        $result = $channel->send($this->createNotifiable(), $this->createNotification($message));
+
+        $this->assertSame(2, $result->failureCount());
     }
 }
